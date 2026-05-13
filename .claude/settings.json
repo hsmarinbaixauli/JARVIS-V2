@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python scripts/check_environment.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
