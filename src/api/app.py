@@ -21,9 +21,10 @@ _FRONTEND_DIR = Path(__file__).parents[2] / "frontend"
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
-    # Step 4+: initialise DB, Playwright ERPClient, etc.
+    from src.persistence.database import init_db
+    init_db()
     yield
-    # Step 4+: close DB connections, shut down Playwright.
+    # Step 10+: shut down Playwright ERPClient.
 
 
 def create_app() -> FastAPI:
