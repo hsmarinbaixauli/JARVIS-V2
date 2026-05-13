@@ -8,8 +8,48 @@
   <link rel="icon" href="assets/favicon.ico">
 </head>
 <body>
-  <!-- Jarvis V2 web chat interface. Populated by frontend/js/app.js -->
-  <div id="app"></div>
+  <div id="app">
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-logo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
+          </svg>
+          Jarvis
+        </span>
+        <button id="btn-new-chat" title="Nueva conversación" aria-label="Nueva conversación">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        </button>
+      </div>
+      <nav id="conversation-list" aria-label="Conversaciones"></nav>
+    </aside>
+
+    <main id="chat-panel">
+      <div id="chat-header">
+        <span id="chat-title">Nueva conversación</span>
+      </div>
+      <div id="messages" role="log" aria-live="polite" aria-label="Mensajes"></div>
+      <div id="input-area">
+        <form id="input-form" autocomplete="off">
+          <textarea
+            id="input-field"
+            placeholder="Escribe un mensaje… (Enter para enviar, Shift+Enter para nueva línea)"
+            rows="1"
+            maxlength="2000"
+            aria-label="Mensaje"
+          ></textarea>
+          <button type="submit" id="btn-send" aria-label="Enviar" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 19V5M5 12l7-7 7 7"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </main>
+  </div>
+
   <script src="js/app.js" type="module"></script>
 </body>
 </html>
