@@ -1,18 +1,14 @@
 """Anthropic tool definitions for Jarvis capabilities.
 
-Exports a single ``TOOLS`` list that can be passed directly as the ``tools=``
-argument to any Anthropic API call.  This module contains no runtime logic —
-it is pure, static data.
+Exports ``TOOLS`` (full list) and ``get_active_tools()`` (filtered by feature
+flags).  This module contains no runtime logic beyond the feature-flag filter.
 """
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
-
-# ---------------------------------------------------------------------------
-# Tool definitions
-# ---------------------------------------------------------------------------
 
 TOOLS: list[dict[str, Any]] = [
     {
@@ -52,9 +48,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "create_event",
-        "description": (
-            "Create a new event on the primary Google Calendar."
-        ),
+        "description": "Create a new event on the primary Google Calendar.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -99,9 +93,7 @@ TOOLS: list[dict[str, Any]] = [
             "properties": {
                 "max_results": {
                     "type": "integer",
-                    "description": (
-                        "Maximum number of unread messages to return. Defaults to 10."
-                    ),
+                    "description": "Maximum number of unread messages to return. Defaults to 10.",
                     "minimum": 1,
                     "maximum": 25,
                 },
@@ -113,19 +105,15 @@ TOOLS: list[dict[str, Any]] = [
         "name": "send_email_reply",
         "description": (
             "Send a plain-text reply to a specific email message. "
-            "IMPORTANT: Always read the recipient and the full proposed reply body "
-            "back to the user and wait for explicit verbal confirmation before "
-            "calling this tool."
+            "IMPORTANT: Always show the recipient and the full proposed reply body "
+            "to the user and wait for explicit confirmation before calling this tool."
         ),
         "input_schema": {
             "type": "object",
             "properties": {
                 "message_id": {
                     "type": "string",
-                    "description": (
-                        "The id of the message to reply to, as returned by "
-                        "get_unread_emails."
-                    ),
+                    "description": "The id of the message to reply to, as returned by get_unread_emails.",
                 },
                 "body_text": {
                     "type": "string",
@@ -137,10 +125,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "mark_email_read",
-        "description": (
-            "Mark a single email as read after the user has heard it summarized "
-            "or replied to it."
-        ),
+        "description": "Mark a single email as read.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -152,13 +137,13 @@ TOOLS: list[dict[str, Any]] = [
             "required": ["message_id"],
         },
     },
+    # --- Personal tools (gated by JARVIS_PERSONAL_TOOLS) ---
     {
         "name": "get_current_weather",
         "description": (
             "Get the current weather for a city using OpenWeatherMap. "
-            "Returns temperature in degrees, a short Spanish description, humidity and wind. "
-            "Use this whenever the user asks about the weather, temperature, rain, "
-            "or whether to take an umbrella."
+            "Returns temperature, a short Spanish description, humidity and wind. "
+            "Use when the user asks about weather, temperature, rain, or whether to take an umbrella."
         ),
         "input_schema": {
             "type": "object",
@@ -166,9 +151,8 @@ TOOLS: list[dict[str, Any]] = [
                 "city": {
                     "type": "string",
                     "description": (
-                        "City in OpenWeatherMap format, e.g. \"Valencia,ES\" or "
-                        "\"Madrid,ES\". If omitted, the default city from the "
-                        "OPENWEATHER_CITY environment variable is used."
+                        "City in OpenWeatherMap format, e.g. \"Valencia,ES\". "
+                        "Defaults to OPENWEATHER_CITY env var if omitted."
                     ),
                 },
                 "units": {
@@ -184,39 +168,15 @@ TOOLS: list[dict[str, Any]] = [
         "name": "spotify_play",
         "description": (
             "Start or resume Spotify playback. "
-            "Use 'artist' + 'track' for a specific song, 'artist' alone to play an "
-            "artist's top tracks, or 'query' for a genre/mood/playlist search. "
-            "Omit all three to simply resume. "
-            "Input may come from voice recognition and could have spelling errors — "
-            "use your knowledge of music to correct misspellings before searching "
-            "(e.g. 'Duky', 'Dukis', 'Ducky' → 'Duki'). "
-            "Always use the correct spelling in the parameters you pass."
+            "Use artist + track for a specific song, artist alone for top tracks, "
+            "or query for genre/mood/playlist search. Omit all three to resume."
         ),
         "input_schema": {
             "type": "object",
             "properties": {
-                "artist": {
-                    "type": "string",
-                    "description": (
-                        "Artist name with correct spelling. Use alone to play the "
-                        "artist's top tracks, or together with 'track' for a specific song."
-                    ),
-                },
-                "track": {
-                    "type": "string",
-                    "description": (
-                        "Song title with correct spelling. Must be combined with "
-                        "'artist' for a precise match."
-                    ),
-                },
-                "query": {
-                    "type": "string",
-                    "description": (
-                        "Free-text search for a genre, mood, or playlist: "
-                        "'jazz', 'lofi para estudiar', 'música relajante'. "
-                        "Use when no specific artist or track is requested."
-                    ),
-                },
+                "artist": {"type": "string", "description": "Artist name with correct spelling."},
+                "track": {"type": "string", "description": "Song title. Combine with artist for precise match."},
+                "query": {"type": "string", "description": "Free-text genre/mood search, e.g. 'jazz', 'lofi'."},
             },
             "required": [],
         },
@@ -255,10 +215,32 @@ TOOLS: list[dict[str, Any]] = [
     {
         "name": "spotify_current_track",
         "description": (
-            "Return the currently playing Spotify track (artist, title, album, "
-            "playback progress). Use when the user asks '¿qué suena ahora?' or "
-            "'¿qué canción es esta?'."
+            "Return the currently playing Spotify track (artist, title, album, progress). "
+            "Use when the user asks what song is playing."
         ),
         "input_schema": {"type": "object", "properties": {}, "required": []},
     },
 ]
+
+_PERSONAL_TOOL_NAMES: frozenset[str] = frozenset({
+    "get_current_weather",
+    "spotify_play",
+    "spotify_pause",
+    "spotify_next",
+    "spotify_previous",
+    "spotify_set_volume",
+    "spotify_current_track",
+})
+
+
+def get_active_tools() -> list[dict[str, Any]]:
+    """Return TOOLS filtered by the JARVIS_PERSONAL_TOOLS feature flag.
+
+    When JARVIS_PERSONAL_TOOLS is not set or false, weather and Spotify tools
+    are excluded so Claude never attempts to call them.
+    """
+    flag = os.environ.get("JARVIS_PERSONAL_TOOLS", "false").strip().lower()
+    personal_enabled = flag in ("1", "true", "yes")
+    if personal_enabled:
+        return TOOLS
+    return [t for t in TOOLS if t["name"] not in _PERSONAL_TOOL_NAMES]
