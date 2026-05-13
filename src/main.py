@@ -1,20 +1,21 @@
-"""Jarvis voice assistant entry point.
+"""Jarvis entry point.
 
-Orchestrates the full voice-assistant loop:
-  1. Record audio from the microphone.
-  2. Transcribe with Whisper.
-  3. Send the transcript to Claude (with calendar, Gmail, weather and Spotify tools).
-  4. Execute any tool calls Claude requests.
-  5. Speak the final text response aloud.
+Two modes:
+  --serve   Start the FastAPI web chat server (Jarvis V2).
+  (default) Run the legacy voice assistant loop.
 
-Run with:
+Run web server:
+    python src/main.py --serve
+    python -m src.main --serve
+
+Run voice assistant (legacy):
     python -m src.main
-or:
     python src/main.py
 """
 
 from __future__ import annotations
 
+import argparse
 import logging
 import os
 import random
@@ -647,5 +648,30 @@ def main() -> None:
         sys.exit(0)
 
 
+def serve() -> None:
+    """Start the Jarvis V2 FastAPI web chat server via uvicorn."""
+    import uvicorn
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    host: str = os.environ.get("JARVIS_HOST", "127.0.0.1")
+    port: int = int(os.environ.get("JARVIS_PORT", "8000"))
+    reload: bool = os.environ.get("JARVIS_DEV", "1") != "0"
+
+    _log.info("Starting Jarvis V2 web server at http://%s:%d", host, port)
+    uvicorn.run("src.api.app:app", host=host, port=port, reload=reload)
+
+
 if __name__ == "__main__":
-    main()
+    _parser = argparse.ArgumentParser(description="Jarvis V2")
+    _parser.add_argument(
+        "--serve",
+        action="store_true",
+        help="Start the FastAPI web chat server instead of the voice loop.",
+    )
+    _args, _ = _parser.parse_known_args()
+
+    if _args.serve:
+        serve()
+    else:
+        main()
