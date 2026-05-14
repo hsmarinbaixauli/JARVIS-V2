@@ -20,3 +20,4 @@ requests==2.32.3
 spotipy==2.24.0
 elevenlabs>=1.0.0
 openwakeword
+playwright>=1.44.0

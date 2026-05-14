@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from src.api.routes.chat import router as chat_router
+from src.api.routes.erp import router as erp_router
 from src.api.routes.gmail import router as gmail_router
 from src.api.routes.health import router as health_router
 
@@ -22,10 +23,29 @@ _FRONTEND_DIR = Path(__file__).parents[2] / "frontend"
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
+    import logging
+    import os
+
     from src.persistence.database import init_db
     init_db()
+
+    # Start the ERP Playwright client when credentials are present.
+    if os.getenv("ERP_USER"):
+        try:
+            from src.api.dependencies import get_services
+            from src.erp.client import init_erp_client
+            erp = await init_erp_client()
+            get_services()["erp"] = erp
+            logging.getLogger(__name__).info("ERP client started successfully.")
+        except Exception as exc:
+            logging.getLogger(__name__).warning(
+                "ERP client failed to start (ERP features disabled): %s", exc
+            )
+
     yield
-    # Step 10+: shut down Playwright ERPClient.
+
+    from src.erp.client import shutdown_erp_client
+    await shutdown_erp_client()
 
 
 def create_app() -> FastAPI:
@@ -46,6 +66,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router, prefix="/api")
     app.include_router(chat_router, prefix="/api")
     app.include_router(gmail_router, prefix="/api")
+    app.include_router(erp_router, prefix="/api")
 
     # Serve React/HTML frontend as static files.  Must be mounted last so
     # /api/* routes always take precedence.

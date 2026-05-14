@@ -17,7 +17,7 @@ _log = logging.getLogger(__name__)
 _NO_CALENDAR = {"error": "Google Calendar no disponible. Verifica las credenciales OAuth."}
 _NO_GMAIL = {"error": "Gmail no disponible. Verifica las credenciales OAuth."}
 _NO_SPOTIFY = {"error": "Spotify no configurado. Revisa las variables SPOTIFY_* en .env"}
-_NO_ERP = {"error": "ERP agent not implemented yet (Step 10)."}
+_NO_ERP = {"error": "ERP client not initialized"}
 
 
 def dispatch(
@@ -150,9 +150,25 @@ def dispatch(
 
     # --- ERP (Step 10) ---
     if tool_name == "erp_get_order_status":
-        return _NO_ERP
+        erp = services.get("erp")
+        if erp is None:
+            return _NO_ERP
+        from src.erp.orders import get_order_status
+        # run_sync schedules the coroutine on the main event loop so Playwright
+        # objects (created there) are used in the loop they belong to.
+        return erp.run_sync(get_order_status(erp, tool_input["order_id"]))
 
     if tool_name == "erp_search_by_customer":
-        return _NO_ERP
+        erp = services.get("erp")
+        if erp is None:
+            return _NO_ERP
+        from src.erp.search import search_by_customer
+        return erp.run_sync(
+            search_by_customer(
+                erp,
+                tool_input["customer_name"],
+                max_results=tool_input.get("max_results", 10),
+            )
+        )
 
     raise ValueError(f"Unknown tool: {tool_name!r}")

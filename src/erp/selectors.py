@@ -1,33 +1,27 @@
-"""DOM selector constants for the Expande ERP (w3erp). All selector values are
-empty strings and must be filled by inspecting the live ERP at ERP_URL with
-browser DevTools. Prefer CSS selectors using the 'name' attribute (e.g.
-input[name='nick']) over class-based selectors for stability."""
+"""DOM selector constants for the Expande ERP (w3erp).
+
+All values are derived from inspecting the live ERP with browser DevTools.
+CSS selectors use the 'name' attribute where available for stability.
+"""
 from __future__ import annotations
 
+# Login page URL
+LOGIN_URL: str = "https://afosxsofa.expande.es/ERP/3.2/inicio/w3erp/index.php"
+
 # Login form selectors
-LOGIN_NICK: str = ""
-LOGIN_USER: str = ""
-LOGIN_PASS: str = ""
-LOGIN_SUBMIT: str = ""
-DASHBOARD_INDICATOR: str = ""
+LOGIN_NICK: str = 'input[name="nick"]'
+LOGIN_USER: str = 'input[name="login"]'
+LOGIN_PASS: str = 'input[name="passwd"]'
+LOGIN_SUBMIT: str = 'button[type="submit"]'
 
-# Order detail selectors
-ORDER_SEARCH_INPUT: str = ""
-ORDER_STATUS_FIELD: str = ""
-ORDER_CUSTOMER_FIELD: str = ""
-ORDER_DATE_FIELD: str = ""
-ORDER_TOTAL_FIELD: str = ""
-ORDER_LINES_TABLE: str = ""
+# Post-login success indicators
+DASHBOARD_URL_FRAGMENT: str = "/base/php/pag/u/"
+DASHBOARD_TITLE_FRAGMENT: str = "Escritorio"
 
-# Customer search selectors
-SEARCH_NAV_LINK: str = ""
-SEARCH_CUSTOMER_INPUT: str = ""
-SEARCH_SUBMIT_BTN: str = ""
-SEARCH_RESULTS_TABLE: str = ""
-SEARCH_RESULTS_ROW: str = ""
+# Orders page URL
+ORDERS_URL: str = "https://afosxsofa.expande.es/ERP/3.2/base/php/pag/u/u09004000.php"
 
-# Search results column indices
-SEARCH_COL_ORDER_ID: int = 0
-SEARCH_COL_CUSTOMER: int = 1
-SEARCH_COL_STATUS: int = 2
-SEARCH_COL_DATE: int = 3
+# Orders page selectors — these live inside an iframe
+ORDERS_SEARCH_INPUT: str = 'input[name="compo_pers"]'
+ORDERS_SEARCH_BUTTON: str = "button"   # first button in the iframe
+ORDERS_RESULTS_TABLE: str = "table"    # results table in the iframe
