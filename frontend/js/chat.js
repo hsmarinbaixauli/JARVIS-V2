@@ -134,11 +134,12 @@ export function beginStream() {
 
     appendCard(toolName, cardData) {
       const CARD_RENDERERS = {
-        get_unread_emails:      renderEmailCard,
-        get_today_events:       renderCalendarCard,
-        get_upcoming_events:    renderCalendarCard,
-        erp_get_order_status:   renderErpOrderCard,
-        erp_search_by_customer: renderErpSearchCard,
+        get_unread_emails:          renderEmailCard,
+        get_unread_outlook_emails:  renderEmailCard,
+        get_today_events:           renderCalendarCard,
+        get_upcoming_events:        renderCalendarCard,
+        erp_get_order_status:       renderErpOrderCard,
+        erp_search_by_customer:     renderErpSearchCard,
       };
       const renderer = CARD_RENDERERS[toolName];
       if (!renderer) return;
@@ -278,21 +279,22 @@ function _autoResize() {
 }
 
 const _TOOL_LABELS = {
-  erp_get_order_status:   "Consultando pedido en ERP...",
-  erp_search_by_customer: "Buscando cliente en ERP...",
-  get_today_events:       "Consultando calendario...",
-  get_upcoming_events:    "Consultando calendario...",
-  get_unread_emails:      "Leyendo emails...",
-  send_email_reply:       "Enviando respuesta...",
-  mark_email_read:        "Marcando email como leído...",
-  get_current_weather:    "Consultando el tiempo...",
-  create_event:           "Creando evento...",
-  spotify_play:           "Reproduciendo música...",
-  spotify_pause:          "Pausando música...",
-  spotify_next:           "Siguiente canción...",
-  spotify_previous:       "Canción anterior...",
-  spotify_set_volume:     "Ajustando volumen...",
-  spotify_current_track:  "Consultando reproducción...",
+  erp_get_order_status:       "Consultando pedido en ERP...",
+  erp_search_by_customer:     "Buscando cliente en ERP...",
+  get_today_events:           "Consultando calendario...",
+  get_upcoming_events:        "Consultando calendario...",
+  get_unread_emails:          "Leyendo emails de Gmail...",
+  get_unread_outlook_emails:  "Leyendo emails de Outlook...",
+  send_email_reply:           "Enviando respuesta...",
+  mark_email_read:            "Marcando email como leído...",
+  get_current_weather:        "Consultando el tiempo...",
+  create_event:               "Creando evento...",
+  spotify_play:               "Reproduciendo música...",
+  spotify_pause:              "Pausando música...",
+  spotify_next:               "Siguiente canción...",
+  spotify_previous:           "Canción anterior...",
+  spotify_set_volume:         "Ajustando volumen...",
+  spotify_current_track:      "Consultando reproducción...",
 };
 
 function _toolLabel(name) {

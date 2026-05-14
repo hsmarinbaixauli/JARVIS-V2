@@ -4,7 +4,7 @@ Provides summarize_emails(emails, anthropic_client) which calls
 claude-haiku-4-5 with a Spanish-language system prompt to produce a
 structured JSON digest of unread emails.
 
-Returns a GmailSummary with:
+Returns an EmailSummary with:
 - resumen_general: overall Spanish summary string
 - total_no_leidos: integer count of unread emails
 - correos: list of EmailItem records, each with urgencia,
@@ -52,16 +52,19 @@ class EmailItem(BaseModel):
     accion_sugerida: str
 
 
-class GmailSummary(BaseModel):
+class EmailSummary(BaseModel):
     resumen_general: str
     total_no_leidos: int
     correos: list[EmailItem]
 
 
+GmailSummary = EmailSummary  # backwards-compat
+
+
 async def summarize_emails(
     emails: list[dict[str, Any]],
     anthropic_client: Any,
-) -> GmailSummary:
+) -> EmailSummary:
     """Call Claude Haiku with a Spanish summarization prompt.
 
     Args:
@@ -74,7 +77,7 @@ async def summarize_emails(
         A validated GmailSummary Pydantic model.
     """
     if not emails:
-        return GmailSummary(
+        return EmailSummary(
             resumen_general="No hay correos no leídos en este momento.",
             total_no_leidos=0,
             correos=[],
@@ -111,7 +114,7 @@ async def summarize_emails(
         )
 
         parsed = json.loads(raw_text)
-        return GmailSummary(**parsed)
+        return EmailSummary(**parsed)
 
     except json.JSONDecodeError as exc:
         _log.error("Claude returned non-JSON output: %s", exc)
@@ -121,7 +124,7 @@ async def summarize_emails(
         return _fallback_summary(emails)
 
 
-def _fallback_summary(emails: list[dict[str, Any]]) -> GmailSummary:
+def _fallback_summary(emails: list[dict[str, Any]]) -> EmailSummary:
     """Return a minimal summary when the LLM call fails."""
     items = [
         EmailItem(
@@ -131,7 +134,7 @@ def _fallback_summary(emails: list[dict[str, Any]]) -> GmailSummary:
         )
         for e in emails
     ]
-    return GmailSummary(
+    return EmailSummary(
         resumen_general=(
             f"Tienes {len(emails)} correo(s) no leído(s). "
             "No fue posible generar el resumen automático en este momento."

@@ -96,6 +96,9 @@ document.addEventListener("keydown", e => {
 // Load initial conversation list
 _refreshSidebar(null);
 
+// Initialise Outlook connect button / status indicator
+_initOutlookConnect();
+
 // ─── Actions ───────────────────────────────────────────────────────────────
 
 function _openNewChat() {
@@ -212,4 +215,248 @@ async function _refreshSidebar(activeId) {
 
 function _truncate(str, max) {
   return str.length <= max ? str : str.slice(0, max).trimEnd() + "…";
+}
+
+// ─── Outlook Connect ───────────────────────────────────────────────────────
+
+async function _initOutlookConnect() {
+  const headerEl = document.getElementById("chat-header");
+  if (!headerEl) return;
+
+  try {
+    const res = await fetch("/api/outlook/auth-status");
+    if (!res.ok) return;
+    const { authenticated } = await res.json();
+    if (authenticated) {
+      _showOutlookConnected(headerEl);
+    } else {
+      _showOutlookConnectBtn(headerEl);
+    }
+  } catch (_) {
+    // Non-fatal: if the request fails, no Outlook UI is shown.
+  }
+}
+
+function _showOutlookConnected(headerEl) {
+  const indicator = document.createElement("div");
+  indicator.className = "outlook-status connected";
+  indicator.setAttribute("title", "Microsoft 365 conectado");
+  const icon = document.createElement("span");
+  icon.textContent = "✓";
+  const label = document.createElement("span");
+  label.textContent = "Outlook";
+  indicator.appendChild(icon);
+  indicator.appendChild(label);
+  headerEl.appendChild(indicator);
+}
+
+function _showOutlookConnectBtn(headerEl) {
+  const btn = document.createElement("button");
+  btn.className = "outlook-connect-btn";
+  btn.setAttribute("title", "Conectar Microsoft 365");
+  const icon = document.createElement("span");
+  icon.textContent = "⊞";
+  const label = document.createElement("span");
+  label.textContent = "Conectar Outlook";
+  btn.appendChild(icon);
+  btn.appendChild(label);
+  headerEl.appendChild(btn);
+
+  btn.addEventListener("click", () => _startOutlookAuth(btn, headerEl));
+}
+
+async function _startOutlookAuth(btn, headerEl) {
+  btn.disabled = true;
+  const labelSpan = btn.querySelector("span:last-child");
+  if (labelSpan) labelSpan.textContent = "Conectando...";
+
+  try {
+    const res = await fetch("/api/outlook/authenticate", { method: "POST" });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showToast(err.detail || "No se pudo iniciar la autenticación de Outlook.", "error");
+      btn.disabled = false;
+      if (labelSpan) labelSpan.textContent = "Conectar Outlook";
+      return;
+    }
+    const flow = await res.json();
+    const modal = _buildOutlookModal(flow);
+    document.body.appendChild(modal.backdrop);
+
+    let pollInterval = null;
+    let countdownInterval = null;
+    const expiresMs = (flow.expires_in || 900) * 1000;
+    const expiresAt = Date.now() + expiresMs;
+
+    // Countdown timer
+    countdownInterval = setInterval(() => {
+      const remaining = Math.max(0, expiresAt - Date.now());
+      const totalSecs = Math.floor(remaining / 1000);
+      const mins = String(Math.floor(totalSecs / 60)).padStart(2, "0");
+      const secs = String(totalSecs % 60).padStart(2, "0");
+      if (modal.countdownEl) modal.countdownEl.textContent = `Caduca en: ${mins}:${secs}`;
+      if (remaining === 0) {
+        clearInterval(countdownInterval);
+        clearInterval(pollInterval);
+        _removeModal(modal.backdrop);
+        showToast("Tiempo de autenticación agotado. Inténtalo de nuevo.", "error");
+        btn.disabled = false;
+        if (labelSpan) labelSpan.textContent = "Conectar Outlook";
+      }
+    }, 1000);
+
+    // Poll auth status every 2500ms
+    pollInterval = setInterval(async () => {
+      try {
+        const statusRes = await fetch("/api/outlook/auth-status");
+        if (!statusRes.ok) return;
+        const { authenticated } = await statusRes.json();
+        if (authenticated) {
+          clearInterval(pollInterval);
+          clearInterval(countdownInterval);
+          _removeModal(modal.backdrop);
+          // Swap button for connected indicator
+          btn.remove();
+          _showOutlookConnected(headerEl);
+          showToast("Outlook conectado correctamente.", "success");
+        }
+      } catch (_) {}
+    }, 2500);
+
+    // Timeout safeguard
+    setTimeout(() => {
+      clearInterval(pollInterval);
+      clearInterval(countdownInterval);
+      _removeModal(modal.backdrop);
+      if (!document.querySelector(".outlook-status.connected")) {
+        btn.disabled = false;
+        if (labelSpan) labelSpan.textContent = "Conectar Outlook";
+        showToast("Tiempo de autenticación agotado. Inténtalo de nuevo.", "error");
+      }
+    }, expiresMs);
+
+  } catch (err) {
+    showToast("Error al conectar Outlook: " + err.message, "error");
+    btn.disabled = false;
+    if (labelSpan) labelSpan.textContent = "Conectar Outlook";
+  }
+}
+
+function _removeModal(backdrop) {
+  if (backdrop && backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+}
+
+/**
+ * Build and return the device-code modal DOM structure.
+ * All user-facing strings use textContent / href attributes (no innerHTML with external data).
+ */
+function _buildOutlookModal(flow) {
+  // Backdrop
+  const backdrop = document.createElement("div");
+  backdrop.className = "outlook-modal-backdrop";
+
+  // Modal box
+  const modal = document.createElement("div");
+  modal.className = "outlook-modal";
+  backdrop.appendChild(modal);
+
+  // Header
+  const header = document.createElement("div");
+  header.className = "outlook-modal-header";
+
+  const title = document.createElement("span");
+  title.textContent = "Conectar Microsoft Outlook";
+
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "outlook-modal-close";
+  closeBtn.setAttribute("title", "Cerrar");
+  closeBtn.setAttribute("aria-label", "Cerrar modal");
+  closeBtn.textContent = "×";
+  // Closing the modal does NOT stop polling — user may have already authed in browser.
+  closeBtn.addEventListener("click", () => _removeModal(backdrop));
+
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+  modal.appendChild(header);
+
+  // Body
+  const body = document.createElement("div");
+  body.className = "outlook-modal-body";
+  modal.appendChild(body);
+
+  // URL section
+  const urlLabel = document.createElement("div");
+  urlLabel.className = "outlook-modal-label";
+  urlLabel.textContent = "Abre el enlace en tu navegador:";
+  body.appendChild(urlLabel);
+
+  const urlLink = document.createElement("a");
+  urlLink.className = "outlook-modal-link";
+  urlLink.href = flow.verification_uri;
+  urlLink.target = "_blank";
+  urlLink.rel = "noopener noreferrer";
+  urlLink.textContent = flow.verification_uri;
+  body.appendChild(urlLink);
+
+  // Code section
+  const codeLabel = document.createElement("div");
+  codeLabel.className = "outlook-modal-label";
+  codeLabel.textContent = "E introduce el código:";
+  body.appendChild(codeLabel);
+
+  const codeRow = document.createElement("div");
+  codeRow.className = "outlook-modal-code-row";
+
+  const codeBox = document.createElement("div");
+  codeBox.className = "outlook-modal-code";
+  codeBox.textContent = flow.user_code;
+
+  const copyBtn = document.createElement("button");
+  copyBtn.className = "outlook-modal-copy";
+  copyBtn.setAttribute("title", "Copiar código");
+  copyBtn.setAttribute("aria-label", "Copiar código al portapapeles");
+  copyBtn.textContent = "Copiar";
+  copyBtn.addEventListener("click", () => {
+    navigator.clipboard.writeText(flow.user_code).then(() => {
+      copyBtn.textContent = "Copiado";
+      copyBtn.classList.add("copied");
+      setTimeout(() => {
+        copyBtn.textContent = "Copiar";
+        copyBtn.classList.remove("copied");
+      }, 1500);
+    }).catch(() => {});
+  });
+
+  codeRow.appendChild(codeBox);
+  codeRow.appendChild(copyBtn);
+  body.appendChild(codeRow);
+
+  // Waiting indicator
+  const waitingRow = document.createElement("div");
+  waitingRow.className = "outlook-modal-waiting";
+
+  const waitingText = document.createElement("span");
+  waitingText.textContent = "Esperando confirmación...";
+
+  const dotsEl = document.createElement("span");
+  dotsEl.className = "outlook-modal-dots";
+  for (let i = 0; i < 3; i++) {
+    const dot = document.createElement("span");
+    dotsEl.appendChild(dot);
+  }
+
+  waitingRow.appendChild(waitingText);
+  waitingRow.appendChild(dotsEl);
+  body.appendChild(waitingRow);
+
+  // Countdown timer
+  const countdownEl = document.createElement("div");
+  countdownEl.className = "outlook-modal-countdown";
+  const totalSecs = flow.expires_in || 900;
+  const mins = String(Math.floor(totalSecs / 60)).padStart(2, "0");
+  const secs = String(totalSecs % 60).padStart(2, "0");
+  countdownEl.textContent = `Caduca en: ${mins}:${secs}`;
+  body.appendChild(countdownEl);
+
+  return { backdrop, countdownEl };
 }

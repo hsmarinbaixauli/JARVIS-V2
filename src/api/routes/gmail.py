@@ -18,7 +18,7 @@ import anthropic
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 
-from src.gmail.summarizer import GmailSummary, EmailItem, summarize_emails
+from src.gmail.summarizer import EmailSummary, GmailSummary, EmailItem, summarize_emails
 
 _log = logging.getLogger(__name__)
 router = APIRouter()
@@ -36,7 +36,7 @@ def _get_anthropic_client() -> anthropic.Anthropic:
     return anthropic.Anthropic(api_key=api_key)
 
 
-def _mock_summary(max_results: int) -> GmailSummary:
+def _mock_summary(max_results: int) -> EmailSummary:
     """Return demo data so the endpoint always returns valid JSON."""
     demo_emails = [
         EmailItem(
@@ -56,7 +56,7 @@ def _mock_summary(max_results: int) -> GmailSummary:
         ),
     ]
     count = min(max_results, len(demo_emails))
-    return GmailSummary(
+    return EmailSummary(
         resumen_general=(
             "DEMO — credenciales de Gmail no configuradas. "
             "Tienes correos urgentes que requieren atención: "
@@ -71,10 +71,10 @@ def _mock_summary(max_results: int) -> GmailSummary:
 # Routes
 # ---------------------------------------------------------------------------
 
-@router.get("/gmail/summary", response_model=GmailSummary)
+@router.get("/gmail/summary", response_model=EmailSummary)
 async def gmail_summary(
     max_results: int = Query(default=10, ge=1, le=25),
-) -> GmailSummary:
+) -> EmailSummary:
     """Return a Spanish AI-generated digest of unread Gmail messages.
 
     Falls back to demo data when Gmail credentials or the Anthropic API key

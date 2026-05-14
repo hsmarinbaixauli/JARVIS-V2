@@ -16,6 +16,7 @@ _log = logging.getLogger(__name__)
 
 _NO_CALENDAR = {"error": "Google Calendar no disponible. Verifica las credenciales OAuth."}
 _NO_GMAIL = {"error": "Gmail no disponible. Verifica las credenciales OAuth."}
+_NO_OUTLOOK = {"error": "Outlook no disponible. Conecta tu cuenta Microsoft 365 desde la barra de chat."}
 _NO_SPOTIFY = {"error": "Spotify no configurado. Revisa las variables SPOTIFY_* en .env"}
 _NO_ERP = {"error": "ERP client not initialized"}
 
@@ -100,6 +101,16 @@ def dispatch(
         from src.gmail.messages import mark_as_read
         mark_as_read(gmail, tool_input["message_id"])
         return {"status": "ok"}
+
+    # --- Outlook (Microsoft 365) ---
+    if tool_name == "get_unread_outlook_emails":
+        from src.outlook.auth import is_authenticated, get_outlook_token
+        from src.outlook.messages import get_unread_messages as outlook_get_unread
+        if not is_authenticated():
+            return _NO_OUTLOOK
+        token = get_outlook_token()
+        max_results: int = max(1, min(int(float(tool_input.get("max_results", 10))), 25))
+        return outlook_get_unread(token, max_results=max_results)
 
     # --- Weather (personal tools) ---
     if tool_name == "get_current_weather":

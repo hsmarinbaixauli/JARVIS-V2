@@ -102,6 +102,27 @@ TOOLS: list[dict[str, Any]] = [
         },
     },
     {
+        "name": "get_unread_outlook_emails",
+        "description": (
+            "Fetch unread emails from the user's Microsoft 365 Outlook inbox via Microsoft Graph. "
+            "Returns a list with id, subject, sender, snippet, and date for each unread message. "
+            "Use this when the user mentions Outlook, work email, Microsoft 365, or their corporate inbox. "
+            "For Gmail use get_unread_emails instead."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "max_results": {
+                    "type": "integer",
+                    "description": "Maximum number of unread messages to return (1–25). Defaults to 10.",
+                    "minimum": 1,
+                    "maximum": 25,
+                },
+            },
+            "required": [],
+        },
+    },
+    {
         "name": "send_email_reply",
         "description": (
             "Send a plain-text reply to a specific email message. "

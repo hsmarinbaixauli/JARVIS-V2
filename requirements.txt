@@ -21,3 +21,5 @@ spotipy==2.24.0
 elevenlabs>=1.0.0
 openwakeword
 playwright>=1.44.0
+msal>=1.31,<2.0
+httpx>=0.27,<0.29

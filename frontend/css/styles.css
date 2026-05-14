@@ -647,3 +647,90 @@ html, body {
   color: #3fb950;
   border-color: rgba(63,185,80,0.4);
 }
+
+/* Outlook connect button + status in header */
+.outlook-connect-btn {
+  height: 28px; padding: 0 10px;
+  border-radius: 6px; border: 1px solid var(--border);
+  background: transparent; color: var(--text-2);
+  font-size: 12px; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; gap: 5px;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  margin-left: auto;
+}
+.outlook-connect-btn:hover { background: var(--bg-3); color: var(--text-0); border-color: var(--accent); }
+.outlook-connect-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.outlook-status {
+  height: 28px; padding: 0 10px; border-radius: 6px;
+  font-size: 12px; display: flex; align-items: center; gap: 5px;
+  flex-shrink: 0; margin-left: auto;
+}
+.outlook-status.connected { color: #3fb950; }
+
+/* Device-code modal */
+.outlook-modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 10000;
+  display: flex; align-items: center; justify-content: center;
+}
+.outlook-modal {
+  background: var(--bg-1); border: 1px solid var(--border);
+  border-radius: 10px; width: 100%; max-width: 420px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+.outlook-modal-header {
+  padding: 14px 16px; background: var(--bg-2);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex; align-items: center; justify-content: space-between;
+  font-weight: 600; font-size: 14px; color: var(--text-0);
+}
+.outlook-modal-close {
+  background: transparent; border: none; color: var(--text-3);
+  cursor: pointer; font-size: 18px; line-height: 1;
+  padding: 2px 4px; border-radius: 4px;
+}
+.outlook-modal-close:hover { color: var(--text-0); background: var(--bg-3); }
+.outlook-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.outlook-modal-label { font-size: 13px; color: var(--text-2); margin-bottom: 4px; }
+.outlook-modal-link {
+  display: block; padding: 9px 12px;
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--accent-hover); font-size: 13px; text-decoration: none;
+  word-break: break-all;
+}
+.outlook-modal-link:hover { border-color: var(--accent); }
+.outlook-modal-code-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.outlook-modal-code {
+  flex: 1; padding: 10px 14px;
+  background: var(--bg-0); border: 1px solid var(--border); border-radius: 6px;
+  font-family: var(--mono); font-size: 22px; font-weight: 700;
+  color: var(--text-0); letter-spacing: 3px; text-align: center;
+}
+.outlook-modal-copy {
+  background: transparent; border: 1px solid var(--border); border-radius: 6px;
+  padding: 8px 10px; color: var(--text-2); cursor: pointer; font-size: 12px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.outlook-modal-copy:hover { color: var(--text-0); border-color: var(--accent); }
+.outlook-modal-copy.copied { color: #3fb950; border-color: rgba(63,185,80,0.4); }
+.outlook-modal-waiting {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--text-2);
+}
+.outlook-modal-dots span {
+  display: inline-block; width: 5px; height: 5px;
+  border-radius: 50%; background: var(--accent);
+  animation: outlook-dot-pulse 1.2s infinite ease-in-out;
+}
+.outlook-modal-dots span:nth-child(2) { animation-delay: 0.2s; }
+.outlook-modal-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes outlook-dot-pulse {
+  0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+  40%            { opacity: 1;   transform: scale(1); }
+}
+.outlook-modal-countdown { font-size: 12px; color: var(--text-3); text-align: right; }
