@@ -9,10 +9,12 @@
  *   appendUserMsg(text)     — add user bubble
  *   beginStream()           — returns stream controller object:
  *       { addTool(id, name), finishTool(id, isErr), appendText(delta),
- *         finalise() }
+ *         appendCard(toolName, cardData), finalise() }
  *   appendErrorMsg(text)    — show error line in chat
  *   setInputEnabled(bool)   — enable/disable textarea + button
  */
+
+import { renderEmailCard, renderCalendarCard, renderErpOrderCard, renderErpSearchCard } from "./cards.js";
 
 let _messagesEl = null;
 let _inputField = null;
@@ -128,6 +130,22 @@ export function beginStream() {
       if (!chip) return;
       chip.innerHTML = `<span class="chip-dot"></span><span>${chip.querySelector("span:last-child").textContent}</span>`;
       chip.classList.add(isError ? "error" : "done");
+    },
+
+    appendCard(toolName, cardData) {
+      const CARD_RENDERERS = {
+        get_unread_emails:      renderEmailCard,
+        get_today_events:       renderCalendarCard,
+        get_upcoming_events:    renderCalendarCard,
+        erp_get_order_status:   renderErpOrderCard,
+        erp_search_by_customer: renderErpSearchCard,
+      };
+      const renderer = CARD_RENDERERS[toolName];
+      if (!renderer) return;
+      const cardEl = renderer(cardData);
+      if (!cardEl) return;
+      row.el.insertBefore(cardEl, row.body);
+      _scrollToBottom();
     },
 
     appendText(delta) {

@@ -43,7 +43,7 @@ export async function deleteConversation(conversationId) {
  *   onTextDelta:     (d:{delta:string}) => void,
  *   onToolStart:     (d:{id:string, name:string}) => void,
  *   onToolExecuting: (d:{id:string, name:string}) => void,
- *   onToolResult:    (d:{id:string, name:string, output:string, is_error:boolean}) => void,
+ *   onToolResult:    (d:{id:string, name:string, output:string, is_error:boolean, card_data:any}) => void,
  *   onError:         (d:{message:string}) => void,
  *   onDone:          (d:{conversation_id:string}) => void,
  * }} callbacks

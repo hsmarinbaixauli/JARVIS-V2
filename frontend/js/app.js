@@ -106,7 +106,10 @@ async function _sendMessage(text) {
     onTextDelta:     ({ delta }) => ctrl.appendText(delta),
     onToolStart:     ({ id, name }) => ctrl.addTool(id, name),
     onToolExecuting: () => {},
-    onToolResult:    ({ id, is_error }) => ctrl.finishTool(id, is_error),
+    onToolResult: ({ id, name, is_error, card_data }) => {
+      ctrl.finishTool(id, is_error);
+      if (!is_error && card_data) ctrl.appendCard(name, card_data);
+    },
 
     onError: ({ message }) => {
       ctrl.finalise();

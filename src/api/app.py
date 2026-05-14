@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from src.api.routes.chat import router as chat_router
+from src.api.routes.gmail import router as gmail_router
 from src.api.routes.health import router as health_router
 
 _FRONTEND_DIR = Path(__file__).parents[2] / "frontend"
@@ -44,6 +45,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health_router, prefix="/api")
     app.include_router(chat_router, prefix="/api")
+    app.include_router(gmail_router, prefix="/api")
 
     # Serve React/HTML frontend as static files.  Must be mounted last so
     # /api/* routes always take precedence.
