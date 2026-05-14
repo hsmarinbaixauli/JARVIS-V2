@@ -25,7 +25,7 @@ _log = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
-SCOPES = ["Mail.Read", "Mail.Send", "User.Read", "offline_access"]
+SCOPES = ["Mail.Read", "Mail.Send", "User.Read"]
 _TENANT_ID = "2cb0ae1d-fc5b-4c31-a900-9fda54a1e85d"
 _AUTHORITY = f"https://login.microsoftonline.com/{_TENANT_ID}"
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
