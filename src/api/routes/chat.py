@@ -36,6 +36,12 @@ def chat(
     services: dict = Depends(get_services),
 ) -> ChatResponse:
     """Blocking chat with SQLite-backed conversation history."""
+    if len(req.message) > 2000:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Message exceeds 2000 character limit",
+        )
+
     conversation_id = req.conversation_id or str(uuid4())
 
     if repo.get_conversation(conversation_id) is None:

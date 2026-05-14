@@ -12,12 +12,16 @@ adds CORS middleware (localhost only), mounts the frontend/ static files,
 and provides a lifespan context for future Playwright / DB startup.
 """
 
+import logging
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+
+_access_log = logging.getLogger("jarvis.access")
 
 from src.api.routes.chat import router as chat_router
 from src.api.routes.erp import router as erp_router
@@ -56,6 +60,20 @@ async def _lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Jarvis V2", version="2.0", lifespan=_lifespan)
+
+    @app.middleware("http")
+    async def _log_requests(request: Request, call_next):
+        start = time.monotonic()
+        response = await call_next(request)
+        elapsed_ms = (time.monotonic() - start) * 1000
+        _access_log.info(
+            "%s %s → %d  (%.0fms)",
+            request.method,
+            request.url.path,
+            response.status_code,
+            elapsed_ms,
+        )
+        return response
 
     app.add_middleware(
         CORSMiddleware,

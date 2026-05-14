@@ -158,6 +158,22 @@ export function beginStream() {
     finalise() {
       _setCursor(false);
       row.body.innerHTML = _renderMarkdown(textBuf);
+
+      // Copy button — only shown on hover via CSS
+      const copyBtn = _el("button", { className: "msg-copy-btn", title: "Copiar" });
+      copyBtn.textContent = "Copy";
+      copyBtn.addEventListener("click", () => {
+        navigator.clipboard.writeText(textBuf).then(() => {
+          copyBtn.textContent = "✓";
+          copyBtn.classList.add("copied");
+          setTimeout(() => {
+            copyBtn.textContent = "Copy";
+            copyBtn.classList.remove("copied");
+          }, 1500);
+        }).catch(() => {});
+      });
+      row.el.appendChild(copyBtn);
+
       _scrollToBottom();
     },
   };
@@ -289,4 +305,22 @@ function _esc(s) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+/**
+ * Create a DOM element with optional properties (no innerHTML).
+ * @param {string} tag
+ * @param {Object} [props]
+ * @returns {HTMLElement}
+ */
+function _el(tag, props = {}) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k in el) {
+      el[k] = v;
+    } else {
+      el.setAttribute(k, v);
+    }
+  }
+  return el;
 }

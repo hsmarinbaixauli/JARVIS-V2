@@ -5,7 +5,8 @@
  *   - Bootstrap sidebar and chat panel
  *   - Manage current conversation state
  *   - Drive SSE streaming lifecycle
- *   - Keyboard shortcut: Ctrl+/ → focus input
+ *   - Keyboard shortcuts
+ *   - Toast notification system
  */
 
 import {
@@ -28,6 +29,31 @@ let currentId   = null;   // active conversation_id (null = new)
 let streaming   = false;  // guard against concurrent sends
 let activeSource = null;  // live EventSource (so we can abort)
 
+// ─── Toast ─────────────────────────────────────────────────────────────────
+
+function _ensureToastContainer() {
+  let el = document.getElementById("toast-container");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "toast-container";
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
+export function showToast(message, type = "error") {
+  const container = _ensureToastContainer();
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add("fade-out");
+    toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+  }, 3000);
+}
+
 // ─── Bootstrap ─────────────────────────────────────────────────────────────
 
 const sidebarEl = document.getElementById("sidebar");
@@ -42,11 +68,28 @@ initSidebar(sidebarEl, {
 
 initChat(panelEl, text => _sendMessage(text));
 
-// Keyboard shortcut: Ctrl+/ → focus input
+// Keyboard shortcuts
 document.addEventListener("keydown", e => {
+  const inputField = document.getElementById("input-field");
+  const inputFocused = document.activeElement === inputField;
+
+  // Press "/" anywhere (no modifier, input not focused) → focus input
+  if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && !inputFocused) {
+    e.preventDefault();
+    inputField.focus();
+    return;
+  }
+
+  // Escape when input is focused → blur
+  if (e.key === "Escape" && inputFocused) {
+    inputField.blur();
+    return;
+  }
+
+  // Legacy Ctrl+/ → focus input
   if ((e.ctrlKey || e.metaKey) && e.key === "/") {
     e.preventDefault();
-    document.getElementById("input-field").focus();
+    inputField.focus();
   }
 });
 
@@ -79,6 +122,7 @@ async function _selectConversation(id) {
     loadHistory(msgs);
   } catch (err) {
     appendErrorMsg("Error al cargar la conversación: " + err.message);
+    showToast("Error al cargar la conversación: " + err.message, "error");
   } finally {
     setInputEnabled(true);
   }
@@ -89,6 +133,7 @@ async function _deleteConversation(id) {
     await deleteConversation(id);
   } catch (err) {
     console.error("[app] delete failed", err);
+    showToast("Error al eliminar la conversación.", "error");
   }
   removeSidebarItem(id);
   if (currentId === id) _openNewChat();
@@ -113,7 +158,9 @@ async function _sendMessage(text) {
 
     onError: ({ message }) => {
       ctrl.finalise();
-      appendErrorMsg(message || "Error inesperado.");
+      const errText = message || "Error inesperado.";
+      appendErrorMsg(errText);
+      showToast(errText, "error");
       _finishStream(null);
     },
 
@@ -157,6 +204,7 @@ async function _refreshSidebar(activeId) {
     replaceSidebarList(convs, activeId);
   } catch (err) {
     console.error("[app] failed to load conversations", err);
+    showToast("No se pudieron cargar las conversaciones.", "error");
   }
 }
 
