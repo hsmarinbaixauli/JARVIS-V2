@@ -119,7 +119,7 @@ export function beginStream() {
       const chip = document.createElement("span");
       chip.className = "tool-chip";
       chip.dataset.toolId = id;
-      chip.innerHTML = `<span class="chip-spinner"></span><span>${_esc(name)}</span>`;
+      chip.innerHTML = `<span class="chip-spinner"></span><span>${_esc(_toolLabel(name))}</span>`;
       toolRow.appendChild(chip);
       tools[id] = chip;
       _scrollToBottom();
@@ -259,6 +259,28 @@ function _scrollToBottom() {
 function _autoResize() {
   _inputField.style.height = "auto";
   _inputField.style.height = Math.min(_inputField.scrollHeight, 148) + "px";
+}
+
+const _TOOL_LABELS = {
+  erp_get_order_status:   "Consultando pedido en ERP...",
+  erp_search_by_customer: "Buscando cliente en ERP...",
+  get_today_events:       "Consultando calendario...",
+  get_upcoming_events:    "Consultando calendario...",
+  get_unread_emails:      "Leyendo emails...",
+  send_email_reply:       "Enviando respuesta...",
+  mark_email_read:        "Marcando email como leído...",
+  get_current_weather:    "Consultando el tiempo...",
+  create_event:           "Creando evento...",
+  spotify_play:           "Reproduciendo música...",
+  spotify_pause:          "Pausando música...",
+  spotify_next:           "Siguiente canción...",
+  spotify_previous:       "Canción anterior...",
+  spotify_set_volume:     "Ajustando volumen...",
+  spotify_current_track:  "Consultando reproducción...",
+};
+
+function _toolLabel(name) {
+  return _TOOL_LABELS[name] ?? name;
 }
 
 function _esc(s) {

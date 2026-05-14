@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import sys
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -45,6 +46,12 @@ class ERPClient:
     async def start(self) -> None:
         """Launch Chromium and log in to the ERP."""
         self._loop = asyncio.get_event_loop()
+        if sys.platform == "win32" and not isinstance(self._loop, asyncio.ProactorEventLoop):
+            logging.getLogger(__name__).warning(
+                "ERP: running on Windows without ProactorEventLoop — "
+                "subprocess support may be missing. Ensure app.py sets "
+                "WindowsProactorEventLoopPolicy before uvicorn starts."
+            )
         self._playwright = await async_playwright().start()
         self._browser = await self._playwright.chromium.launch(headless=True)
         self._context = await self._browser.new_context()

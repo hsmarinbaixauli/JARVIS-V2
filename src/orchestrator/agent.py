@@ -156,7 +156,7 @@ async def run_streaming(
                 content = f"Error: {exc}"
                 card_data = None
                 is_error = True
-                _log.warning("Streaming tool %r raised: %s", block.name, exc)
+                _log.exception("Streaming tool %r raised:", block.name)
 
             yield "tool_result", {
                 "id": block.id, "name": block.name,

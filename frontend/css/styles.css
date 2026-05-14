@@ -547,3 +547,38 @@ html, body {
 .badge.urgent { background: rgba(248,81,73,0.12); color: var(--error); border: 1px solid rgba(248,81,73,0.25); }
 .badge.unread { background: var(--accent-dim); color: var(--accent-hover); border: 1px solid rgba(56,139,253,0.25); }
 .badge.allday { background: var(--bg-3); color: var(--text-2); border: 1px solid var(--border); }
+
+/* ERP status badges */
+.badge.erp-done      { background: rgba(63,185,80,0.12); color: #3fb950; border: 1px solid rgba(63,185,80,0.25); }
+.badge.erp-progress  { background: var(--accent-dim); color: var(--accent-hover); border: 1px solid rgba(56,139,253,0.25); }
+.badge.erp-pending   { background: rgba(210,153,34,0.12); color: #d2993c; border: 1px solid rgba(210,153,34,0.25); }
+.badge.erp-cancelled { background: rgba(248,81,73,0.12); color: var(--error); border: 1px solid rgba(248,81,73,0.25); }
+.badge.erp-neutral   { background: var(--bg-3); color: var(--text-2); border: 1px solid var(--border); }
+
+/* ERP card elements */
+.card-erp-num {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--accent);
+  font-size: 13px;
+  flex-shrink: 0;
+  min-width: 52px;
+}
+.card-erp-customer {
+  color: var(--text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.card-erp-detail {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--text-2);
+  font-size: 12px;
+}
+.card-erp-amount {
+  font-family: var(--mono);
+  color: var(--text-1);
+}

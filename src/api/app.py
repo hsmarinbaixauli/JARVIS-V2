@@ -1,10 +1,16 @@
+from __future__ import annotations
+
+import asyncio
+import sys
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
 """FastAPI application factory.
 
 Creates and configures the FastAPI app instance, registers routers,
 adds CORS middleware (localhost only), mounts the frontend/ static files,
 and provides a lifespan context for future Playwright / DB startup.
 """
-from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from pathlib import Path

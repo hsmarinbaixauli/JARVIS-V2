@@ -220,6 +220,49 @@ TOOLS: list[dict[str, Any]] = [
         ),
         "input_schema": {"type": "object", "properties": {}, "required": []},
     },
+    # --- ERP tools ---
+    {
+        "name": "erp_get_order_status",
+        "description": (
+            "Look up an order in the Expande ERP by its order ID. "
+            "Returns the order status, customer name, date, total, and line items. "
+            "Use when the user asks about a specific order number or order ID."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "string",
+                    "description": "The ERP order ID or order number to look up.",
+                },
+            },
+            "required": ["order_id"],
+        },
+    },
+    {
+        "name": "erp_search_by_customer",
+        "description": (
+            "Search orders in the Expande ERP by customer name. "
+            "Returns a list of matching orders with their ID, status, date, and total. "
+            "Use when the user asks about orders for a specific customer or company."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "customer_name": {
+                    "type": "string",
+                    "description": "Customer or company name to search for.",
+                },
+                "max_results": {
+                    "type": "integer",
+                    "description": "Maximum number of orders to return. Defaults to 10.",
+                    "minimum": 1,
+                    "maximum": 50,
+                },
+            },
+            "required": ["customer_name"],
+        },
+    },
 ]
 
 _PERSONAL_TOOL_NAMES: frozenset[str] = frozenset({

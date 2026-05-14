@@ -648,18 +648,26 @@ def main() -> None:
         sys.exit(0)
 
 
-def serve() -> None:
+def serve(host: str = "0.0.0.0", port: int = 8000) -> None:
     """Start the Jarvis V2 FastAPI web chat server via uvicorn."""
+    import asyncio
+    import sys
     import uvicorn
-    from dotenv import load_dotenv
 
-    load_dotenv()
-    host: str = os.environ.get("JARVIS_HOST", "127.0.0.1")
-    port: int = int(os.environ.get("JARVIS_PORT", "8000"))
-    reload: bool = os.environ.get("JARVIS_DEV", "1") != "0"
+    if sys.platform == "win32":
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
-    _log.info("Starting Jarvis V2 web server at http://%s:%d", host, port)
-    uvicorn.run("src.api.app:app", host=host, port=port, reload=reload)
+    config = uvicorn.Config(
+        "src.api.app:app",
+        host=host,
+        port=port,
+        log_level="info",
+        loop="asyncio",
+    )
+    server = uvicorn.Server(config)
+    import threading
+    threading.Timer(1.5, lambda: webbrowser.open(f"http://localhost:{port}")).start()
+    asyncio.run(server.serve())
 
 
 if __name__ == "__main__":

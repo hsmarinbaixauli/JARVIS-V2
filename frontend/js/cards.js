@@ -303,7 +303,178 @@ export function renderCalendarCard(events) {
   return card;
 }
 
-// ─── ERP stubs (Step 10) ───────────────────────────────────────────────────
+// ─── ERP cards ─────────────────────────────────────────────────────────────
 
-export function renderErpOrderCard(_data)  { return null; }
-export function renderErpSearchCard(_data) { return null; }
+// Package/box icon (Feather "package" outer hexagon)
+const _ERP_PATH =
+  "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z";
+
+function _erpBadgeClass(estado) {
+  if (!estado) return "erp-neutral";
+  const s = estado.toLowerCase();
+  if (s.includes("cancel"))                                              return "erp-cancelled";
+  if (s.includes("serv") || s.includes("entregad") || s.includes("completad")) return "erp-done";
+  if (s.includes("proceso") || s.includes("curso") || s.includes("tramit") || s.includes("fabric")) return "erp-progress";
+  if (s.includes("pendiente"))                                           return "erp-pending";
+  return "erp-neutral";
+}
+
+/**
+ * Render a card for erp_get_order_status results.
+ * @param {{ found: boolean, order_id: string, rows: Array<Object> }} data
+ */
+export function renderErpOrderCard(data) {
+  if (!data || typeof data !== "object") return null;
+
+  const card = _el("div", "card");
+
+  // Header
+  const header = _el("div", "card-header");
+  header.appendChild(_svgIcon(_ERP_PATH));
+  const label = _el("span");
+  _setText(label, "Pedido ERP");
+  header.appendChild(label);
+  if (data.order_id) {
+    const idBadge = _el("span", "card-header-count");
+    _setText(idBadge, "#" + data.order_id);
+    header.appendChild(idBadge);
+  }
+  card.appendChild(header);
+
+  // Not-found state
+  if (!data.found || !Array.isArray(data.rows) || data.rows.length === 0) {
+    const row = _el("div", "card-row");
+    const msg = _el("span", "card-row-snippet");
+    _setText(msg, "Pedido" + (data.order_id ? " #" + data.order_id : "") + " no encontrado");
+    row.appendChild(msg);
+    card.appendChild(row);
+    return card;
+  }
+
+  for (const order of data.rows) {
+    const row = _el("div", "card-row");
+
+    // Top line: order number + status badge + date
+    const top = _el("div", "card-row-top");
+
+    const numEl = _el("span", "card-erp-num");
+    _setText(numEl, order["Pedido"] || data.order_id || "—");
+    top.appendChild(numEl);
+
+    const estado = order["Estado Pedido"] || "";
+    if (estado) {
+      const badge = _el("span", "badge " + _erpBadgeClass(estado));
+      _setText(badge, estado);
+      top.appendChild(badge);
+    }
+
+    const fecha = order["Fecha pedido"] || "";
+    if (fecha) {
+      const meta = _el("span", "card-row-meta");
+      _setText(meta, fecha);
+      top.appendChild(meta);
+    }
+
+    row.appendChild(top);
+
+    // Customer name
+    const nombre = order["Nombre"] || "";
+    if (nombre) {
+      const nameEl = _el("div", "card-row-subject");
+      _setText(nameEl, nombre);
+      row.appendChild(nameEl);
+    }
+
+    // Detail: amount · last update
+    const importe = order["B.Imponible"] || "";
+    const avance  = order["Ult. avance"] || "";
+    if (importe || avance) {
+      const detail = _el("div", "card-erp-detail");
+      if (importe) {
+        const amt = _el("span", "card-erp-amount");
+        _setText(amt, importe + " €");
+        detail.appendChild(amt);
+      }
+      if (avance) {
+        const adv = _el("span");
+        _setText(adv, avance);
+        detail.appendChild(adv);
+      }
+      row.appendChild(detail);
+    }
+
+    card.appendChild(row);
+  }
+
+  return card;
+}
+
+/**
+ * Render a card for erp_search_by_customer results.
+ * @param {Array<Object>} data  Array of order rows
+ */
+export function renderErpSearchCard(data) {
+  if (!Array.isArray(data) || data.length === 0) return null;
+
+  const card = _el("div", "card");
+
+  // Header
+  const header = _el("div", "card-header");
+  header.appendChild(_svgIcon(_ERP_PATH));
+  const label = _el("span");
+  _setText(label, "Resultados ERP");
+  header.appendChild(label);
+  const countBadge = _el("span", "card-header-count");
+  _setText(countBadge, String(data.length));
+  header.appendChild(countBadge);
+  card.appendChild(header);
+
+  for (const order of data) {
+    const row = _el("div", "card-row");
+
+    // Top: order number + status badge + customer name
+    const top = _el("div", "card-row-top");
+
+    const numEl = _el("span", "card-erp-num");
+    _setText(numEl, order["Pedido"] || "—");
+    top.appendChild(numEl);
+
+    const estado = order["Estado Pedido"] || "";
+    if (estado) {
+      const badge = _el("span", "badge " + _erpBadgeClass(estado));
+      _setText(badge, estado);
+      top.appendChild(badge);
+    }
+
+    const nombre = order["Nombre"] || "";
+    if (nombre) {
+      const nameEl = _el("span", "card-erp-customer");
+      _setText(nameEl, nombre);
+      top.appendChild(nameEl);
+    }
+
+    row.appendChild(top);
+
+    // Detail: date + amount
+    const fecha   = order["Fecha pedido"] || "";
+    const importe = order["B.Imponible"]  || "";
+    if (fecha || importe) {
+      const detail = _el("div", "card-erp-detail");
+      if (fecha) {
+        const f = _el("span");
+        _setText(f, fecha);
+        detail.appendChild(f);
+      }
+      if (importe) {
+        const amt = _el("span", "card-erp-amount");
+        _setText(amt, importe + " €");
+        detail.appendChild(amt);
+      }
+      row.appendChild(detail);
+    }
+
+    card.appendChild(row);
+  }
+
+  return card;
+}
